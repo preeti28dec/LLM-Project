@@ -13,41 +13,61 @@ export default function DummyChatBox() {
   const messagesEndRef = useRef(null);
   let iconStyles = { fontSize: "1.5em" };
   const [socket, setSocket] = useState(null);
-
+  const accessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOWI5OTA3YmZlMGFjM2NmODUyYTg4OWFhOWE0ZTNhM2EiLCJpYXQiOjE3NDE2MzA1OTksImV4cCI6MTc0MTYzMjM5OX0.-8HmKomzu__IABxJLPM78II21gXu5p6CNgDsEHF-0qY';
+  const userId = '9b9907bfe0ac3cf852a889aa9a4e3a3a';
+  
   useEffect(() => {
     const ws = new WebSocket(
-      "ws://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=9b9907bfe0ac3cf852a889aa9a4e3a3a&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOWI5OTA3YmZlMGFjM2NmODUyYTg4OWFhOWE0ZTNhM2EiLCJpYXQiOjE3NDE2MTQxNDAsImV4cCI6MTc0MTYxNTk0MH0._fFCuRz57RFuNP8AiuwojpjSs3H4-NgZB4Gt3mUX-SE"
+      `ws://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=${userId}&access_token=${accessToken}`
     );
+    let messageBuffer = ""; // Store message chunks
+
     ws.onmessage = (event) => {
-      setMessages((prev) => [...prev, { text: event.data, sender: "bot" }]);
+        const parsedData = JSON.parse(event.data);
+        function stripThinkTag(content) {
+          return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+      }
+      if (parsedData.content === "Empty Response") {
+          setMessages((prev) => [...prev, { text: stripThinkTag(messageBuffer), sender: "bot" }]);
+          messageBuffer = ""; // Reset for next message sequence
+      } else {
+            messageBuffer += parsedData.content;
+        }
     };
-    
-    ws.onopen = () => console.log("Connected to WebSocket");
+
+    ws.onopen = () => {
+      console.log("Connected to WebSocket")
+      const queryData = JSON.stringify({ query: "hello i'm preeti" });
+      ws.send(queryData);
+    };
     ws.onclose = () => console.log("WebSocket disconnected");
     setSocket(ws);
     return () => ws.close();
   }, []);
+  
+
 
   const sendMessage = () => {
     if (!input.trim()) return;
     const newMessage = { text: input, sender: "user" };
-    setMessages([...messages, newMessage]);
-    socket?.send(input);
+    setMessages([...messages, newMessage]);    
+    const queryData = JSON.stringify({ query: input }); 
+    socket?.send(queryData); 
     setInput("");
-  };
+};
 
   const startEC2Instance = async () => {
     setIsRunning((prev) => !prev);
     const startApiUrl = `https://53pspabkjc.execute-api.us-west-2.amazonaws.com/dev/control?action=ec2&value=${
       isRunning ? "stop" : "start"
-    }&instance=ollama`;
+    }&instance=${isRunning ? "ollama" : "ingestion"}`; 
     try {
       const response = await fetch(startApiUrl, { method: "POST" });
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
       const data = await response.json();
-      console.log("EC2 Instance Started:", data);
+      //console.log("EC2 Instance Started:", data);
     } catch (error) {
-      console.error("Error starting EC2 instance:", error.message);
+      console.log("Error starting EC2 instance:", error.message);
     }
   };
 
@@ -250,7 +270,7 @@ export default function DummyChatBox() {
               </button>
               <button
                 type="button"
-                className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-3"
+                className={`${isRunning ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}  text-white rounded-lg px-4 py-3`}
                 onClick={startEC2Instance}
               >
                 {isRunning ? "Stop" : "Start"} Server

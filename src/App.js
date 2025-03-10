@@ -11,8 +11,8 @@ function App() {
   const code = urlParams.get("code");
 
   useEffect(() => {
-    console.log("Session State:", sessionState);
-    console.log("Code:", code);
+   // console.log("Session State:", sessionState);
+    //console.log("Code:", code);
   }, [sessionState, code]);
 
   return (

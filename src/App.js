@@ -25,7 +25,7 @@ function App() {
         )}
         <Route path="/auth-check" element={<AuthCheck />} /> */}
         {/* <Route path="/" element={<ChatBox />} /> */}
-        <Route path="/" element={<ChatBox />} />
+        <Route path="/" element={<DummyChatBox />} />
 
         {/* <Route path="/home" element={<Home />} /> */}
       </Routes>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
-import Header from './header/index';
+import Header from "./header/index";
 
 export default function DummyChatBox() {
+  const [isRunning, setIsRunning] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Personal");
@@ -11,36 +12,35 @@ export default function DummyChatBox() {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   let iconStyles = { fontSize: "1.5em" };
-  const [ws, setWs] = useState(null);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-      const socket = new WebSocket(
-      "ws://ec2-44-246-112-244.us-west-2.compute.amazonaws.com:5000/streaming_query/wXZjHqfgCvxDXit8zECiOaxB6m6RMSFPM7T1SRFB88366fbcf5ca9676e9de72ba01b98f100349c763717f3eb6aafeade9e4107a72"
+    const ws = new WebSocket(
+      "ws://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=9b9907bfe0ac3cf852a889aa9a4e3a3a&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOWI5OTA3YmZlMGFjM2NmODUyYTg4OWFhOWE0ZTNhM2EiLCJpYXQiOjE3NDE2MTQxNDAsImV4cCI6MTc0MTYxNTk0MH0._fFCuRz57RFuNP8AiuwojpjSs3H4-NgZB4Gt3mUX-SE"
     );
-
-    socket.onopen = () => console.log("WebSocket connected!");
-    socket.onmessage = (event) => {
-      console.log("Message received:", event.data);
-      setMessages((prev) => [...prev, { text: event.data, sender: "Bot" }]);
+    ws.onmessage = (event) => {
+      setMessages((prev) => [...prev, { text: event.data, sender: "bot" }]);
     };
-    socket.onerror = (error) => console.error("WebSocket Error:", error);
-    socket.onclose = () => console.log("WebSocket closed.");
-    setWs(socket);
-    return () => socket.close(); // Cleanup on unmount
+    
+    ws.onopen = () => console.log("Connected to WebSocket");
+    ws.onclose = () => console.log("WebSocket disconnected");
+    setSocket(ws);
+    return () => ws.close();
   }, []);
 
-  const sendMessageInput = () => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const messageObj = { query: input }; // Use input value as message
-      ws.send(JSON.stringify(messageObj));
-      setMessages((prev) => [...prev, { text: input, sender: "You" }]);
-      setInput(""); // Clear input after sending
-    } 
+  const sendMessage = () => {
+    if (!input.trim()) return;
+    const newMessage = { text: input, sender: "user" };
+    setMessages([...messages, newMessage]);
+    socket?.send(input);
+    setInput("");
   };
 
   const startEC2Instance = async () => {
-    const startApiUrl =
-      "https://53pspabkjc.execute-api.us-west-2.amazonaws.com/dev/control?action=ec2&value=start";
+    setIsRunning((prev) => !prev);
+    const startApiUrl = `https://53pspabkjc.execute-api.us-west-2.amazonaws.com/dev/control?action=ec2&value=${
+      isRunning ? "stop" : "start"
+    }&instance=ollama`;
     try {
       const response = await fetch(startApiUrl, { method: "POST" });
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
@@ -50,8 +50,6 @@ export default function DummyChatBox() {
       console.error("Error starting EC2 instance:", error.message);
     }
   };
-
-
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token");
@@ -125,7 +123,7 @@ export default function DummyChatBox() {
         sender: "Bot",
       };
       setMessages((prevMessages) => [...prevMessages, userMessage, botMessage]);
-      sendMessageInput();
+      sendMessage(input);
       setInput("");
     }
   };
@@ -133,7 +131,7 @@ export default function DummyChatBox() {
   return (
     <div className="relative w-full h-screen">
       <div className="fixed top-0 left-0 w-full z-50 bg-white shadow-md">
-        <Header/>
+        <Header />
       </div>
       <div className="h-screen w-full bg-white text-gray-900 flex flex-col pt-16">
         <h1 className="text-4xl font-bold text-center my-4 text-blue-600">
@@ -152,9 +150,9 @@ export default function DummyChatBox() {
                 </p>
               ) : (
                 <div>
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
+                {messages.map((msg, index) => (
+                  <div
+                      key={index}
                       className={
                         msg.sender === "You"
                           ? "text-right my-2"
@@ -239,14 +237,14 @@ export default function DummyChatBox() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessageInput()}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
                 placeholder="I want to…"
                 className="flex-grow border-2 border-gray-300 bg-white p-3 rounded-lg text-gray-900 outline-none"
               />
               <button
                 type="button"
                 className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-3 flex items-center"
-                onClick={sendMessageInput}
+                onClick={sendMessage}
               >
                 <IoSend style={iconStyles} />
               </button>
@@ -255,11 +253,9 @@ export default function DummyChatBox() {
                 className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-3"
                 onClick={startEC2Instance}
               >
-                Start Server
+                {isRunning ? "Stop" : "Start"} Server
               </button>
             </div>
-
-
           </div>
         </div>
       </div>

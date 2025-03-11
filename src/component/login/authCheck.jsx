@@ -1,46 +1,35 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
-function AuthCheck() {
-  const navigate = useNavigate();
+const MyComponent = ({ tokenData }) => {
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-    console.log(urlParams, "urlParams");
-
-    if (code) {
-      navigate("/chat");
-    } else if (code) {
-      const formData = new URLSearchParams();
-      formData.append("grant_type", "authorization_code");
-      formData.append("code", code);
-      formData.append("client_id", "iamDemo");
-      formData.append("client_secret", "5f39f619-a2c2-4699-8f29-6d22311ed654");
-      formData.append("redirect_uri", "https://localhost:3000/chat");  // Match OAuth settings
-      fetch("https://iamonline.app/auth/realms/iamonline/protocol/openid-connect/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData,
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data, "data");
-          if (data.access_token) {
-            localStorage.setItem("authToken", data.access_token);
-            navigate("/chat");
-          } else {
-            navigate("/");
-          }
-        })
-        .catch((error) => {
-          navigate("/");
+    const AccessToken = async () => {
+      try {
+        const res = await fetch("https://mypbot.com:4444/v5/llm-auth/generate-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          mode: "no-cors",
+          body: JSON.stringify({ "accessToken": tokenData }),
         });
-    } else {
-      navigate("/");
-    }
-  }, [navigate]);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const data = await res.json();
+        console.log(data, 'generate');
+        setResponse(data);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+    AccessToken();
+  }, []); 
 
-  return <div>Checking authentication...</div>;
-}
+  return (
+    <div>
+      {response ? <pre>{JSON.stringify(response, null, 2)}</pre> : "Loading..."}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </div>
+  );
+};
 
-export default AuthCheck;
+export default MyComponent;

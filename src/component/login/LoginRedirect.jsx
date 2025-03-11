@@ -4,9 +4,7 @@ function LoginRedirect() {
     const loginUrl =
       "https://iamonline.app/auth/realms/iamonline/protocol/openid-connect/auth" +
       "?client_id=iamDemo" +
-      //"&redirect_uri=https://localhost" +
-      //"&redirect_uri= https://llm-project-neon.vercel.app/" +
-      "&redirect_uri=https://s1.appsolutly.com/emr/web/site/login" +
+      "&redirect_uri=https://localhost" +
       "&scope=openid" +
       "&response_type=code" +
       "&response_mode=query" +

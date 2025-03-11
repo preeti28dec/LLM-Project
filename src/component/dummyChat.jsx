@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
 import Header from "./header/index";
+import MyComponent from './login/authCheck';
 
-export default function DummyChatBox() {
+export default function DummyChatBox({tokenData}) {
   const [isRunning, setIsRunning] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -13,12 +14,37 @@ export default function DummyChatBox() {
   const messagesEndRef = useRef(null);
   let iconStyles = { fontSize: "1.5em" };
   const [socket, setSocket] = useState(null);
-  const accessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOWI5OTA3YmZlMGFjM2NmODUyYTg4OWFhOWE0ZTNhM2EiLCJpYXQiOjE3NDE2MzA1OTksImV4cCI6MTc0MTYzMjM5OX0.-8HmKomzu__IABxJLPM78II21gXu5p6CNgDsEHF-0qY';
-  const userId = '9b9907bfe0ac3cf852a889aa9a4e3a3a';
-  
+  const [accessToken, setaccessToken] = useState('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOWI5OTA3YmZlMGFjM2NmODUyYTg4OWFhOWE0ZTNhM2EiLCJpYXQiOjE3NDE3MDEzMjAsImV4cCI6MTc0MTcwMzEyMH0.8XKCsKS2N4WEbC6Djby1zehJzGYny5vqPyp4VG244CE');
+  const [userId, setuserId] = useState('9b9907bfe0ac3cf852a889aa9a4e3a3a');
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const AccessToken = async () => {
+      try {
+        const res = await fetch("https://mypbot.com:4444/v5/llm-auth/generate-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          mode: "no-cors",
+          body: JSON.stringify({ "accessToken": tokenData }),
+        });
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const responseData = await res.json();
+        if (responseData.success) {
+          setuserId(responseData.data.user_id);
+          setaccessToken(responseData.data.access_token);
+        } 
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+    AccessToken();
+  }, []); 
+
+
   useEffect(() => {
     const ws = new WebSocket(
-      `ws://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=${userId}&access_token=${accessToken}`
+      `wss://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=${userId}&access_token=${accessToken}`
     );
     let messageBuffer = ""; // Store message chunks
 
@@ -45,8 +71,6 @@ export default function DummyChatBox() {
     return () => ws.close();
   }, []);
   
-
-
   const sendMessage = () => {
     if (!input.trim()) return;
     const newMessage = { text: input, sender: "user" };

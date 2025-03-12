@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
 import Header from "./header/index";
-import MyComponent from './login/authCheck';
+import MyComponent from "./login/authCheck";
+import parse from "html-react-parser";
 
-export default function DummyChatBox({tokenData}) {
+
+export default function DummyChatBox({ codeData }) {
   const [isRunning, setIsRunning] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -14,77 +16,184 @@ export default function DummyChatBox({tokenData}) {
   const messagesEndRef = useRef(null);
   let iconStyles = { fontSize: "1.5em" };
   const [socket, setSocket] = useState(null);
-  const [accessToken, setaccessToken] = useState('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOWI5OTA3YmZlMGFjM2NmODUyYTg4OWFhOWE0ZTNhM2EiLCJpYXQiOjE3NDE3MDEzMjAsImV4cCI6MTc0MTcwMzEyMH0.8XKCsKS2N4WEbC6Djby1zehJzGYny5vqPyp4VG244CE');
-  const [userId, setuserId] = useState('9b9907bfe0ac3cf852a889aa9a4e3a3a');
+  const [tokenData, setTokenData] = useState(
+    "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCWDZTQUQ4b3pmc3hVbndLNjY3cHdXeXJybVZGbEM4M0NmcnhDR0hfckpJIn0.eyJleHAiOjE3NDE3MDE0NzMsImlhdCI6MTc0MTcwMTE3MywiYXV0aF90aW1lIjoxNzQxNzAxMTI1LCJqdGkiOiI2Mzg4ZTkwZC0xNmEzLTRlZTItYjIwNS1kOWU1NWI0MTg3MWQiLCJpc3MiOiJodHRwczovL2lhbW9ubGluZS5hcHAvYXV0aC9yZWFsbXMvaWFtb25saW5lIiwic3ViIjoiZWYyMGMxZmUtYzJiZS00NWNjLTg0MTEtMTZkYjNmYTRkOTg0IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiaWFtRGVtbyIsIm5vbmNlIjoiMzIxMjMiLCJzZXNzaW9uX3N0YXRlIjoiN2FlNzg4MDAtMDI3Yy00YWJjLTg4NjItMWYxNjEyNjgzZWJhIiwiYWNyIjoiMSIsInNjb3BlIjoib3BlbmlkIGJpcnRoZGF0ZSB6b25laW5mbyBhZGRyZXNzIGdlbmRlciBwcm9maWxlIGVtYWlsIiwiem9uZWluZm8iOiJBc2lhL0tvbGthdGEiLCJhZGRyZXNzIjp7InN0cmVldF9hZGRyZXNzIjoiUi0xOCAzcmQgZmxvb3IgcHJpdmF0ZSBjb2xvbnkgc3JpIG5pd2FzIHB1cmkgIiwibG9jYWxpdHkiOiJOZXcgRGVsaGkiLCJyZWdpb24iOiJJTiIsInBvc3RhbF9jb2RlIjoiMTEwMDY1IiwiY291bnRyeSI6IkluZGlhIn0sImJpcnRoZGF0ZSI6IjIwMDAtMTItMjgiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZ2VuZGVyIjoiRmVtYWxlIiwibmFtZSI6InByZWV0aSB0aGFrdXIiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwcmVldGkyOGRlYyIsImdpdmVuX25hbWUiOiJwcmVldGkiLCJmYW1pbHlfbmFtZSI6InRoYWt1ciIsImVtYWlsIjoib2ZmaWNpYWxwcmVldGl0aGFrdXJAZ21haWwuY29tIn0.jt1lGsE1cdTZGGKGJmKw49Kud-axheP3tXt4pInh2508PiVFtuibzfF1Qp4eZt0SvjwctPd3_vrY8kE1LAMg8mhlX0dUg4rBohIio43xOHVXlLV7t88DJjDzfBvkAW7t3CPeViCWrD-XyKPDexjASfyOVQiy1lwgusCvIEOElUMOYJ6ja_hWjj1N7ki0LDz3ZvQP8ew4m7Px8dZNTB9HzZfMDSQ3YVDz2Mer4z0lxM6HNDdvgM9WjkYoywEslUQJ4L3iJSUACC3o_TZRUEuQlKLkvoY-z0lJQLfEHxEw0e25BZiZ6vJzpG9mGXXkKMLLpYZvxn3nwX875LR_9wPwIw"
+  );
+  const [accessToken, setaccessToken] = useState(
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOWI5OTA3YmZlMGFjM2NmODUyYTg4OWFhOWE0ZTNhM2EiLCJpYXQiOjE3NDE3OTY3MTEsImV4cCI6MTc0MTc5ODUxMX0.BVmKmTaDTb0nVJHf9hWRf6kT0caGlecV7j1tK1AP23U"
+  );
+  const [userId, setuserId] = useState("9b9907bfe0ac3cf852a889aa9a4e3a3a");
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
+  console.log(codeData, "codeData", messages);
 
-  useEffect(() => {
-    const AccessToken = async () => {
-      try {
-        const res = await fetch("https://mypbot.com:4444/v5/llm-auth/generate-token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          mode: "no-cors",
-          body: JSON.stringify({ "accessToken": tokenData }),
-        });
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        const responseData = await res.json();
-        if (responseData.success) {
-          setuserId(responseData.data.user_id);
-          setaccessToken(responseData.data.access_token);
-        } 
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-    AccessToken();
-  }, []); 
+  // useEffect(() => {
+  //   const AccessToken = async () => {
+  //     try {
+  //       const res = await fetch("https://mypbot.com:4444/v5/llm-auth/generate-token", {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         mode: "no-cors",
+  //         body: JSON.stringify({ "accessToken": tokenData }),
+  //       });
+  //       if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+  //       const responseData = await res.json();
+  //       if (responseData.success) {
+  //         setuserId(responseData.data.user_id);
+  //         setaccessToken(responseData.data.access_token);
+  //       }
+  //     } catch (err) {
+  //       setError(err.message);
+  //     }
+  //   };
+  //   AccessToken();
+  // }, []);
 
+  // useEffect(() => {
+  //   if (!codeData) return;
+  //   const fetchToken = async () => {
+  //     try {
+  //       const response = await fetch(
+  //         "https://iamonline.app/auth/realms/iamonline/protocol/openid-connect/token",
+  //         {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/x-www-form-urlencoded",
+  //                       },
+  //           body: new URLSearchParams({
+  //             grant_type: "authorization_code",
+  //             code: codeData,
+  //             client_id: "iamDemo",
+  //             client_secret: "5f39f619-a2c2-4699-8f29-6d22311ed654",
+  //             redirect_uri: "https://localhost",
+  //           }),
+  //         }
+  //       );
+  //       if (!response.ok) {
+  //         throw new Error(`HTTP error! Status: ${response.status}`);
+  //       }
+  //       const data = await response.json();
+  //       setTokenData(data);
+  //       console.log(data, "Token Data");
+  //     } catch (error) {
+  //       console.log("Error fetching token:", error);
+  //     }
+  //   };
+  //   fetchToken();
 
-  useEffect(() => {
+  // }, []);
+
+  // const webSocketValue = (value) => {
+  //   const ws = new WebSocket(
+  //     `ws://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=${userId}&access_token=${accessToken}`
+  //   );
+  //   let messageBuffer = "";
+  //   ws.onmessage = (event) => {
+  //     const parsedData = JSON.parse(event.data);
+  //     if (parsedData.content === "Empty Response" || parsedData.content.length === 0) {
+  //       setMessages((prev) => [
+  //           ...prev,
+  //           { text: messageBuffer, sender: "bot" }, // Send collected message
+  //       ]);
+  //       messageBuffer = ""; // Reset the buffer after sending
+  //   } else {
+  //       messageBuffer += parsedData.content; // Append only if valid content
+  //   }
+    
+  //   };
+
+  //   ws.onopen = () => {
+  //     console.log("Connected to WebSocket");
+  //     const queryData = JSON.stringify({ query: value});
+  //     ws.send(queryData);
+  //   };
+  //   ws.onclose = () => console.log("WebSocket disconnected");
+  //   setSocket(ws);
+  //   return () => ws.close();
+  // };
+
+  const webSocketValue = (value) => {
     const ws = new WebSocket(
-      `wss://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=${userId}&access_token=${accessToken}`
+      `ws://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=${userId}&access_token=${accessToken}`
     );
-    let messageBuffer = ""; // Store message chunks
+    let messageBuffer = "";
 
     ws.onmessage = (event) => {
+      try {
         const parsedData = JSON.parse(event.data);
-        function stripThinkTag(content) {
-          return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-      }
-      if (parsedData.content === "Empty Response") {
-          setMessages((prev) => [...prev, { text: stripThinkTag(messageBuffer), sender: "bot" }]);
-          messageBuffer = ""; // Reset for next message sequence
-      } else {
-            messageBuffer += parsedData.content;
+        if (parsedData.type === "error" && parsedData.content.includes("CUDA out of memory")) {
+          setMessages((prev) => [
+            ...prev,
+            { text: "Sorry, there is a server issue. Please try again later.", sender: "bot" }
+          ]);
+          return;
         }
+        if (parsedData.content === "Empty Response" || parsedData.content.length === 0) {
+          setMessages((prev) => [
+            ...prev,
+            { text: messageBuffer, sender: "bot" },
+          ]);
+          messageBuffer = "";
+        } else {
+          messageBuffer += parsedData.content; 
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
     };
 
     ws.onopen = () => {
-      console.log("Connected to WebSocket")
-      const queryData = JSON.stringify({ query: "hello i'm preeti" });
+      console.log("Connected to WebSocket");
+      const queryData = JSON.stringify({ query: value });
       ws.send(queryData);
     };
+
     ws.onclose = () => console.log("WebSocket disconnected");
+    
     setSocket(ws);
     return () => ws.close();
-  }, []);
-  
+};
+
+
   const sendMessage = () => {
     if (!input.trim()) return;
-    const newMessage = { text: input, sender: "user" };
-    setMessages([...messages, newMessage]);    
-    const queryData = JSON.stringify({ query: input }); 
-    socket?.send(queryData); 
+    const newMessage = { text: input, sender: "You" };
+    setMessages([...messages, newMessage]);
+    // const queryData = JSON.stringify({ query: input });
+    // socket?.send(queryData);
     setInput("");
-};
+    webSocketValue(input);
+  };
+
+  const handleSend = (message = input) => {
+    console.log(socket,'socket');
+    if (message.trim()) {
+      const userMessage = { id: Date.now(), text: message, sender: "You" };
+      const botResponse =
+        questionData[selectedCategory].default[message] ||
+        questionData[selectedCategory].more?.[message] ||
+        "I'm not sure about that.";
+      // const botMessage = {
+      //   id: Date.now() + 1,
+      //   text: botResponse,
+      //   sender: "Bot",
+      // };
+      // setMessages((prevMessages) => [...prevMessages, userMessage, botMessage]);
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+      sendMessage(input);
+      // const queryData = JSON.stringify({ query: message });
+      // socket?.send(queryData);
+      webSocketValue(message);
+
+      setInput("");
+    }
+  };
 
   const startEC2Instance = async () => {
     setIsRunning((prev) => !prev);
     const startApiUrl = `https://53pspabkjc.execute-api.us-west-2.amazonaws.com/dev/control?action=ec2&value=${
       isRunning ? "stop" : "start"
-    }&instance=${isRunning ? "ollama" : "ingestion"}`; 
+    }&instance=${isRunning ? "ollama" : "ingestion"}`;
     try {
       const response = await fetch(startApiUrl, { method: "POST" });
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
@@ -150,27 +259,26 @@ export default function DummyChatBox({tokenData}) {
       },
     },
   };
+ 
 
-  const handleSend = (message = input) => {
-    if (message.trim()) {
-      const userMessage = { id: Date.now(), text: message, sender: "You" };
+const formatMessageContent = (text) => {
+  if (!text) return "";
+  text = text.replace(
+    /(https?:\/\/[^\s]+)/g,
+    '<a href="$1" target="_blank" class="text-blue-600 underline">$1</a>'
+  );
+  text = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  text = text.replace(/\*(.*?)\*/g, "<em>$1</em>");
+  text = text.replace(/(\d+)\.\s(.*?)(?=\n|$)/g, "<li>$2</li>");
+  text = text.replace(/(-|\*)\s(.*?)(?=\n|$)/g, "<li>$2</li>");
+  if (text.includes("<li>")) {
+    text = `<ul class="list-disc ml-4">${text}</ul>`;
+  }
+  text = text.replace(/\n/g, "<br>");
+  return text;
+};
 
-      // Get the bot response from questionData
-      const botResponse =
-        questionData[selectedCategory].default[message] ||
-        questionData[selectedCategory].more?.[message] ||
-        "I'm not sure about that.";
-
-      const botMessage = {
-        id: Date.now() + 1,
-        text: botResponse,
-        sender: "Bot",
-      };
-      setMessages((prevMessages) => [...prevMessages, userMessage, botMessage]);
-      sendMessage(input);
-      setInput("");
-    }
-  };
 
   return (
     <div className="relative w-full h-screen">
@@ -194,13 +302,13 @@ export default function DummyChatBox({tokenData}) {
                 </p>
               ) : (
                 <div>
-                {messages.map((msg, index) => (
-                  <div
+                  {messages.map((msg, index) => (
+                    <div
                       key={index}
                       className={
                         msg.sender === "You"
-                          ? "text-right my-2"
-                          : "text-left my-2"
+                          ? "text-right my-3"
+                          : "text-left my-3"
                       }
                     >
                       <p
@@ -210,7 +318,7 @@ export default function DummyChatBox({tokenData}) {
                             : "bg-gray-200 text-gray-900"
                         }`}
                       >
-                        {msg.text}
+                        {parse(formatMessageContent(msg.text))}
                       </p>
                     </div>
                   ))}
@@ -294,7 +402,11 @@ export default function DummyChatBox({tokenData}) {
               </button>
               <button
                 type="button"
-                className={`${isRunning ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}  text-white rounded-lg px-4 py-3`}
+                className={`${
+                  isRunning
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
+                }  text-white rounded-lg px-4 py-3`}
                 onClick={startEC2Instance}
               >
                 {isRunning ? "Stop" : "Start"} Server

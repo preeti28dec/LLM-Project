@@ -5,6 +5,7 @@ function LoginRedirect() {
       "https://iamonline.app/auth/realms/iamonline/protocol/openid-connect/auth" +
       "?client_id=iamDemo" +
       "&redirect_uri=https://localhost" +
+      //"&redirect_uri=https://s6.appsolutly.com/emr/"+ 
       "&scope=openid" +
       "&response_type=code" +
       "&response_mode=query" +

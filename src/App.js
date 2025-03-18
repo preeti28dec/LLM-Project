@@ -9,12 +9,12 @@ function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const sessionState = urlParams.get("session_state");
   const codeData = urlParams.get("code");
-  console.log(codeData,'code url');
+  //console.log(codeData,'code url');
   return (
     <Router>
       <Routes>
-        {/* <Route path="/" element={codeData ? <DummyChatBox codeData={codeData}/> : <LoginRedirect />} /> */}
-        <Route path="/" element={<DummyChatBox codeData={codeData}/>} />
+        <Route path="/" element={codeData ? <DummyChatBox codeData={codeData}/> : <LoginRedirect />} />
+        {/* <Route path="/" element={<DummyChatBox codeData={codeData}/>} /> */}
         <Route path="/auth-check" element={<DummyChatBox codeData={codeData}/>} />
         <Route path="/home" element={<Home />} />
       </Routes>

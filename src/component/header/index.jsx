@@ -95,7 +95,11 @@ export default function Header() {
             <option value="en">English</option>
             <option value="fr">Français</option>
           </select>
-          <button className="block text-white">{translations.logout}</button>
+          <button className="block text-white" >
+          {/* <a id="logout" class="nav-link" href="https://iamonline.app/auth/realms/iamonline/protocol/openid-connect/auth?client_id=iamDemo&redirect_uri=https://localhost&scope=openid&response_type=code&response_mode=query&nonce=32123"> */}
+           {translations.logout}
+           {/* </a> */}
+           </button>
         </div>
       )}
     </header>

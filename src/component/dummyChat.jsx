@@ -6,7 +6,16 @@ import MyComponent from "./login/authCheck";
 import parse from "html-react-parser";
 
 export default function DummyChatBox({ codeData }) {
-  const [isRunning, setIsRunning] = useState(false);
+  //  const [isRunning, setIsRunning] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRunning, setIsRunning] = useState(() => {
+    return localStorage.getItem("isRunning") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("isRunning", isRunning);
+  }, [isRunning]);
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Personal");
@@ -79,6 +88,7 @@ export default function DummyChatBox({ codeData }) {
   }, []);
 
   const webSocketValue = (value) => {
+    setIsLoading(true);
     const ws = new WebSocket(
       `ws://ec2-50-112-255-124.us-west-2.compute.amazonaws.com:5000/streaming_query?user_id=${userId}&access_token=${accessTokenvalue}`
     );
@@ -96,6 +106,7 @@ export default function DummyChatBox({ codeData }) {
         messageBuffer += parsedData.content;
       } else {
         messageBuffer += parsedData.content;
+        setIsLoading(false);
       }
     };
     ws.onopen = () => {
@@ -104,10 +115,12 @@ export default function DummyChatBox({ codeData }) {
       ws.send(queryData);
     };
 
-    ws.onclose = () => console.log("WebSocket disconnected");
-
+    ws.onclose = () => {
+      setIsLoading(false);
+      console.log("WebSocket disconnected");
+    };
     setSocket(ws);
-    return () => ws.close();
+    return () => ws.close(setIsLoading(false));
   };
 
   const sendMessage = () => {
@@ -145,10 +158,31 @@ export default function DummyChatBox({ codeData }) {
   };
 
   const startEC2Instance = async () => {
-    setIsRunning((prev) => !prev);
+    const newRunningState = !isRunning; // Toggle state
+    setIsRunning(newRunningState);
+    localStorage.setItem("isRunning", newRunningState);
+
+    // setIsRunning((prev) => !prev);
     const startApiUrl = `https://53pspabkjc.execute-api.us-west-2.amazonaws.com/dev/control?action=ec2&value=${
       isRunning ? "stop" : "start"
-    }&instance=${isRunning ? "ollama" : "ingestion"}`;
+    }&instance=ingestion`;
+    try {
+      const response = await fetch(startApiUrl, { method: "POST" });
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+      const data = await response.json();
+    } catch (error) {
+      console.log("Error starting EC2 instance:", error.message);
+    }
+  };
+  const startEC2ollama = async () => {
+    const newRunningState = !isRunning; // Toggle state
+    setIsRunning(newRunningState);
+    localStorage.setItem("isRunning", newRunningState);
+
+    // setIsRunning((prev) => !prev);
+    const startApiUrl = `https://53pspabkjc.execute-api.us-west-2.amazonaws.com/dev/control?action=ec2&value=${
+      isRunning ? "stop" : "start"
+    }&instance=ollama`;
     try {
       const response = await fetch(startApiUrl, { method: "POST" });
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
@@ -338,13 +372,25 @@ export default function DummyChatBox({ codeData }) {
                 placeholder="I want to…"
                 className="flex-grow border-2 border-gray-300 bg-white p-3 rounded-lg text-gray-900 outline-none"
               />
-              <button
-                type="button"
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-3 flex items-center"
-                onClick={sendMessage}
-              >
-                <IoSend style={iconStyles} />
-              </button>
+              {isLoading ? (
+                <div
+                  className="spinner-container inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-primary"
+                  role="status"
+                >
+                  <span className="loading-spinner !absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                    Loading...
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-3 flex items-center"
+                  onClick={sendMessage}
+                >
+                  <IoSend style={iconStyles} />
+                </button>
+              )}
+
               <button
                 type="button"
                 className={`${
@@ -352,7 +398,10 @@ export default function DummyChatBox({ codeData }) {
                     ? "bg-red-600 hover:bg-red-700"
                     : "bg-green-600 hover:bg-green-700"
                 }  text-white rounded-lg px-4 py-3`}
-                onClick={startEC2Instance}
+                onClick={() => {
+                  startEC2Instance();
+                  startEC2ollama();
+                }}
               >
                 {isRunning ? "Stop" : "Start"} Server
               </button>
